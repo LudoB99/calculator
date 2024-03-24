@@ -4,7 +4,6 @@
 //
 //  Created by Ludovic Belzile on 2024-03-23.
 //
-
 import Foundation
 
 enum Operation {
@@ -13,57 +12,125 @@ enum Operation {
 
 class CalculatorModel: ObservableObject {
     @Published var value = "0"
-    @Published var runningNumber = 0
-    @Published var currentOperation: Operation = .none
+    private var currentOperand = ""
+    private var firstOperand = ""
+    private var currentOperation: Operation = .none
+    private var hasDecimal = false
     
-    func performOperation(_ button: CalcButton) {
+    func didTap(button: CalcButton) {
         switch button {
-        case .add, .subtract, .multiply, .divide, .equal:
-            if button == .add {
-                self.currentOperation = .add
-                self.runningNumber = Int(self.value) ?? 0
-            }
-            else if button == .subtract {
-                self.currentOperation = .subtract
-                self.runningNumber = Int(self.value) ?? 0
-            }
-            else if button == .multiply {
-                self.currentOperation = .multiply
-                self.runningNumber = Int(self.value) ?? 0
-            }
-            else if button == .divide {
-                self.currentOperation = .divide
-                self.runningNumber = Int(self.value) ?? 0
-            }
-            else if button == .equal {
-                let runningValue = self.runningNumber
-                let currentValue = Int(self.value) ?? 0
-                switch self.currentOperation {
-                case .add: self.value = "\(runningValue + currentValue)"
-                case .subtract: self.value = "\(runningValue - currentValue)"
-                case .multiply: self.value = "\(runningValue * currentValue)"
-                case .divide: self.value = "\(runningValue / currentValue)"
-                case .none:
-                    break
-                }
-            }
-            
-            if button != .equal {
-                self.value = "0"
-            }
         case .clear:
-            self.value = "0"
-        case .decimal, .negative, .percent:
-            break
+            clear()
+        case .negative:
+            toggleNegative()
+        case .percent:
+            percent()
+        case .decimal:
+            appendDecimal()
+        case .equal:
+            performOperation()
         default:
-            let number = button.rawValue
-            if self.value == "0" {
-                value = number
-            }
-            else {
-                self.value = "\(self.value)\(number)"
+            if let digit = Int(button.rawValue) {
+                appendDigit(digit)
+            } else {
+                // Handle other operations
+                let operation: Operation
+                switch button {
+                case .add:
+                    operation = .add
+                case .subtract:
+                    operation = .subtract
+                case .multiply:
+                    operation = .multiply
+                case .divide:
+                    operation = .divide
+                default:
+                    return
+                }
+                handleOperation(operation)
             }
         }
     }
+    
+    private func appendDigit(_ digit: Int) {
+        currentOperand += "\(digit)"
+        value = currentOperand
+    }
+    
+    private func appendDecimal() {
+        if !hasDecimal {
+            currentOperand += "."
+            value = currentOperand
+            hasDecimal = true
+        }
+    }
+    
+    private func toggleNegative() {
+        if value.prefix(1) == "-" {
+            currentOperand.removeFirst()
+            value = currentOperand
+        } else {
+            currentOperand = "-" + currentOperand
+            value = currentOperand
+        }
+    }
+    
+    private func percent() {
+        guard value != "0", let currentValue = Double(value) else { return }
+        currentOperand = String(currentValue / 100)
+        value = currentOperand
+    }
+    
+    private func handleOperation(_ operation: Operation) {
+        if currentOperand.isEmpty {
+            if let lastValue = Double(value) {
+                firstOperand = "\(lastValue)"
+            }
+        } else {
+            firstOperand = currentOperand
+            currentOperand = ""
+        }
+        currentOperation = operation
+    }
+    
+    private func performOperation() {
+        if currentOperand.isEmpty {
+            currentOperand = "0"
+        }
+        if let firstValue = Double(firstOperand), let secondValue = Double(currentOperand) {
+            switch currentOperation {
+            case .add:
+                let result = firstValue + secondValue
+                value = isInteger(result) ? "\(Int(result))" : "\(result)"
+            case .subtract:
+                let result = firstValue - secondValue
+                value = isInteger(result) ? "\(Int(result))" : "\(result)"
+            case .multiply:
+                let result = firstValue * secondValue
+                value = isInteger(result) ? "\(Int(result))" : "\(result)"
+            case .divide:
+                if secondValue != 0 {
+                    let result = firstValue / secondValue
+                    value = isInteger(result) ? "\(Int(result))" : "\(result)"
+                } else {
+                    value = "Error"
+                }
+            case .none:
+                break
+            }
+        }
+        currentOperand = value
+    }
+    
+    private func isInteger(_ number: Double) -> Bool {
+        return number.truncatingRemainder(dividingBy: 1) == 0
+    }
+    
+    private func clear() {
+        value = "0"
+        currentOperand = ""
+        firstOperand = ""
+        currentOperation = .none
+        hasDecimal = false
+    }
 }
-
