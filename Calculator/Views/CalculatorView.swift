@@ -79,7 +79,7 @@ struct CalculatorView: View {
     
     func buttonWidth(item: CalcButton) -> CGFloat {
         let availableWidth = UIScreen.main.bounds.width - (CalculatorView.numberOfButtonsPerRow + 1) * CalculatorView.buttonHorizontalSpacing
-        return item == .zero ? availableWidth / CalculatorView.numberOfButtonsPerRow * CalculatorView.zeroButtonWidthMultiplier : availableWidth / CalculatorView.numberOfButtonsPerRow
+        return item == .zero ? 10 + availableWidth / CalculatorView.numberOfButtonsPerRow * CalculatorView.zeroButtonWidthMultiplier : availableWidth / CalculatorView.numberOfButtonsPerRow
     }
     
     func buttonHeight() -> CGFloat {
