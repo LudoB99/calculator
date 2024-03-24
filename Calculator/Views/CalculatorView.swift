@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct CalculatorView: View {
-    
     @ObservedObject var model = CalculatorModel()
     
     static private let buttonHorizontalSpacing: CGFloat = 12
@@ -27,14 +26,26 @@ struct CalculatorView: View {
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
+            
             VStack {
                 Spacer()
+                
                 HStack {
                     Spacer()
                     Text(model.value)
                         .bold()
                         .font(.system(size: 100))
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.trailing)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .overlay(
+                            GeometryReader { proxy in
+                                Color.clear
+                                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .trailing)
+                            }
+                        )
                 }
                 .padding()
                 
@@ -63,7 +74,7 @@ struct CalculatorView: View {
     }
     
     func didTap(button: CalcButton) {
-        model.performOperation(button)
+        model.didTap(button: button)
     }
     
     func buttonWidth(item: CalcButton) -> CGFloat {
@@ -76,6 +87,7 @@ struct CalculatorView: View {
         return availableWidth / CalculatorView.numberOfButtonsPerRow
     }
 }
+
 
 struct CalculatorView_Previews: PreviewProvider {
     static var previews: some View {
